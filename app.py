@@ -215,7 +215,15 @@ def main():
         key="url_input",
         label_visibility="collapsed"
     )
-    
+
+    text_input = st.text_area(
+    "",
+    placeholder="Or paste news text here...",
+    key="text_input",
+    label_visibility="collapsed",
+    height=150
+)
+
     # Search button
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -223,108 +231,117 @@ def main():
     
     st.markdown('</div>', unsafe_allow_html=True)
     
-    # Process when search button is clicked
-    if search_button and url_input:
-        
-        # Validate URL
-        if not validate_url(url_input):
-            st.error(" Please enter a valid URL (must start with http:// or https://)")
-            return
-        
-        # Show loading spinner
-        with st.spinner("🔄 Analyzing article... Please wait..."):
-            
-            # Step 1: Extract article text
-            st.info("Extracting article content...")
-            article_data = extract_article_text(url_input)
-            
-            if not article_data['success'] or not article_data['full_text']:
-                st.error(f" Failed to extract article: {article_data.get('error', 'Unknown error')}")
-                return
-            
-            article_title = article_data['title'] or "Untitled Article"
-            article_text = article_data['full_text']
-            
+    if search_button:
+        # Determine input source
+        if url_input:
+            # Validate URL
+            if not validate_url(url_input):
+                st.error("⚠️ Please enter a valid URL (must start with http:// or https://)")
+            else:
+                # Extract article text from URL
+                with st.spinner("🔄 Extracting article content from URL..."):
+                    article_data = extract_article_text(url_input)
+                    if not article_data['success'] or not article_data['full_text']:
+                        st.error(f"❌ Failed to extract article: {article_data.get('error', 'Unknown error')}")
+                    else:
+                        article_text = article_data['full_text']
+                        article_title = article_data['title'] or "Untitled Article"
+                        
+                        # Step 2: Load model and predict
+                        st.info("🔍 Running AI prediction...")
+                        predictor = FakeNewsPredictor()
+                        prediction_result = predictor.predict(article_text)
+                        
+                        if prediction_result.get('error'):
+                            st.error(f"❌ Prediction error: {prediction_result['error']}")
+                        else:
+                            # Display prediction result
+                            st.markdown("---")
+                            display_prediction_result(prediction_result, article_title)
+                            
+                            # Show related links / fact-checks as before
+                            search_query = article_title
+                            if prediction_result['label'] == 'Fake':
+                                st.markdown("---")
+                                with st.spinner("🔍 Finding fact-check resources..."):
+                                    fact_check_links = search_fact_check(search_query)
+                                    display_related_links(fact_check_links, "Fact-Check Resources", "🛡️")
+                                
+                                with st.spinner("🔍 Finding verified news sources..."):
+                                    related_links = search_related_news(search_query)
+                                    display_related_links(related_links, "Verified News from Trusted Sources", "📰")
+                            else:
+                                st.markdown("---")
+                                with st.spinner("🔍 Finding similar news from other sources..."):
+                                    related_links = search_related_news(search_query)
+                                    display_related_links(related_links, "Similar News from Other Sources", "📰")
+
+        elif text_input:
+            article_text = text_input
+            article_title = text_input[:50] + "..."  # Optional short preview as title
+
             # Step 2: Load model and predict
-            st.info("Running AI prediction...")
+            st.info("🔍 Running AI prediction...")
             predictor = FakeNewsPredictor()
             prediction_result = predictor.predict(article_text)
             
             if prediction_result.get('error'):
-                st.error(f" Prediction error: {prediction_result['error']}")
-                return
-            
-            # Display prediction result
-            st.markdown("---")
-            display_prediction_result(prediction_result, article_title)
-            
-            # Step 3: Get related information using article title
-            search_query = article_title
-            
-            # If fake news, show fact-check links
-            if prediction_result['label'] == 'Fake':
-                st.markdown("---")
-                with st.spinner("🔍 Finding fact-check resources..."):
-                    fact_check_links = search_fact_check(search_query)
-                    display_related_links(
-                        fact_check_links,
-                        "Fact-Check Resources",
-                        "🛡️"
-                    )
-                
-                with st.spinner("🔍 Finding verified news sources..."):
-                    related_links = search_related_news(search_query)
-                    display_related_links(
-                        related_links,
-                        "Verified News from Trusted Sources",
-                        "📰"
-                    )
-            
-            # If real news, show similar news from other sources
+                st.error(f"❌ Prediction error: {prediction_result['error']}")
             else:
+                # Display prediction result
                 st.markdown("---")
-                with st.spinner("🔍 Finding similar news from other sources..."):
-                    related_links = search_related_news(search_query)
-                    display_related_links(
-                        related_links,
-                        "Similar News from Other Sources",
-                        "📰"
-                    )
+                display_prediction_result(prediction_result, article_title)
+                
+                # Show related links / fact-checks as before
+                search_query = article_title
+                if prediction_result['label'] == 'Fake':
+                    st.markdown("---")
+                    with st.spinner("🔍 Finding fact-check resources..."):
+                        fact_check_links = search_fact_check(search_query)
+                        display_related_links(fact_check_links, "Fact-Check Resources", "🛡️")
+                    
+                    with st.spinner("🔍 Finding verified news sources..."):
+                        related_links = search_related_news(search_query)
+                        display_related_links(related_links, "Verified News from Trusted Sources", "📰")
+                else:
+                    st.markdown("---")
+                    with st.spinner("🔍 Finding similar news from other sources..."):
+                        related_links = search_related_news(search_query)
+                        display_related_links(related_links, "Similar News from Other Sources", "📰")
+
+        else:
+            st.warning("⚠️ Please enter a news article URL or paste text to analyze")
+
+        
+        # Add some spacing before footer
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # Display information about the app
+        with st.expander("ℹ️ About This Tool"):
+            st.markdown("""
+            ### How It Works
             
-            st.session_state.analyzed = True
-    
-    elif search_button and not url_input:
-        st.warning("⚠️ Please enter a news article URL to analyze")
-    
-    # Add some spacing before footer
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    
-    # Display information about the app
-    with st.expander("ℹ️ About This Tool"):
-        st.markdown("""
-        ### How It Works
+            1. **Enter URL**: Paste the link to a news article you want to verify
+            2. **AI Analysis**: Our machine learning model analyzes the content
+            3. **Get Results**: Receive a prediction with confidence score
+            4. **Verify Further**: Access fact-checking resources and related news
+            
+            ### Technology
+            
+            - **Model**: TF-IDF + Logistic Regression
+            - **Text Extraction**: Newspaper3k library
+            - **News Sources**: Online Khabar, BBC News
+            - **Fact-Check**: Snopes, FactCheck.org, PolitiFact, Reuters, AP
+            
+            ### Disclaimer
+            
+            This tool uses AI to assist in identifying potentially fake news. Always verify 
+            important information through multiple trusted sources. No automated system is 
+            100% accurate.
+            """)
         
-        1. **Enter URL**: Paste the link to a news article you want to verify
-        2. **AI Analysis**: Our machine learning model analyzes the content
-        3. **Get Results**: Receive a prediction with confidence score
-        4. **Verify Further**: Access fact-checking resources and related news
-        
-        ### Technology
-        
-        - **Model**: TF-IDF + Logistic Regression
-        - **Text Extraction**: Newspaper3k library
-        - **News Sources**: Online Khabar, BBC News
-        - **Fact-Check**: Snopes, FactCheck.org, PolitiFact, Reuters, AP
-        
-        ### Disclaimer
-        
-        This tool uses AI to assist in identifying potentially fake news. Always verify 
-        important information through multiple trusted sources. No automated system is 
-        100% accurate.
-        """)
-    
-    # Display footer
-    display_footer()
+        # Display footer
+        display_footer()
 
 if __name__ == "__main__":
     main()

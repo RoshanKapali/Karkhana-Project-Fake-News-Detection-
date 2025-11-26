@@ -45,7 +45,7 @@ Fake News/
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.8 to python 3.11
 - pip package manager
 
 ### Installation
