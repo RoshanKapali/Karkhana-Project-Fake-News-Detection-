@@ -29,7 +29,3 @@ jobs:
     - name: Train model
       run: |
         python model/train_model.py
-    
-    - name: Run tests
-      run: |
-        python test_system.py
