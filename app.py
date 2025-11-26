@@ -336,8 +336,18 @@ def main():
         key="news_url",
     )
 
+    # NEW — TEXT INPUT
+    st.markdown('<div class="url-label">Or paste news text</div>', unsafe_allow_html=True)
+    text_input = st.text_area(
+        label="",
+        placeholder="Paste the news article content here...",
+        height=180,
+        label_visibility="collapsed",
+        key="news_text",
+    )
+
     st.markdown(
-        '<div class="url-help">Paste the full URL of an online news article you want to check.</div>',
+        '<div class="url-help">You can enter a URL or paste raw text. The model will analyze whichever you provide.</div>',
         unsafe_allow_html=True,
     )
 
@@ -348,10 +358,38 @@ def main():
         analyze = st.button("Analyze article")
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Logic
-    if analyze and not url.strip():
-        st.warning("Please enter a news article URL before analysing.")
+    # Logic for URL or Text
+    if analyze and not url.strip() and not text_input.strip():
+        st.warning("Please enter a news article URL or paste text to analyze.")
 
+    # ---- CASE 1: TEXT PASTED ----
+    elif analyze and text_input.strip():
+
+        article_title = "User provided text"
+        article_text = text_input.strip()
+
+        predictor = FakeNewsPredictor()
+        result = predictor.predict(article_text)
+
+        if result.get("error"):
+            st.error(f"Prediction error: {result['error']}")
+            return
+
+        st.markdown("---")
+        show_prediction(result, article_title)
+
+        tab_overview, tab_article = st.tabs(["Overview", "Full Text"])
+
+        with tab_overview:
+            st.write(
+                "The prediction above is based on patterns learned from a labelled "
+                "fake/real news dataset. Treat it as a signal, not a final verdict."
+            )
+
+        with tab_article:
+            st.text_area("", value=article_text[:6000], height=260)
+
+    # ---- CASE 2: URL ANALYZED ----
     elif analyze and url.strip():
 
         if not validate_url(url):
@@ -368,11 +406,6 @@ def main():
                         f"Could not extract the article content. "
                         f"{article_data.get('error', 'Unknown error.')}"
                     )
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    st.markdown(
-                        '<div class="footer">Fake News Detector • Built with Streamlit & Machine Learning</div>',
-                        unsafe_allow_html=True,
-                    )
                     return
 
                 article_title = article_data.get("title") or "Untitled article"
@@ -384,11 +417,6 @@ def main():
 
                 if result.get("error"):
                     st.error(f"Prediction error: {result['error']}")
-                    st.markdown('</div>', unsafe_allow_html=True)
-                    st.markdown(
-                        '<div class="footer">Fake News Detector • Built with Streamlit & Machine Learning</div>',
-                        unsafe_allow_html=True,
-                    )
                     return
 
             st.markdown("---")
@@ -404,20 +432,9 @@ def main():
                     "The prediction above is based on patterns learned from a labelled "
                     "fake/real news dataset. Treat it as a signal, not a final verdict."
                 )
-                st.write(
-                    "- Check who published the article.\n"
-                    "- Compare it with coverage from other outlets.\n"
-                    "- Use the links in the next tab to verify further."
-                )
 
             with tab_article:
-                st.write("### Extracted article text (preview)")
-                st.text_area(
-                    label="",
-                    value=article_text[:6000],
-                    height=260,
-                    label_visibility="collapsed",
-                )
+                st.text_area("", value=article_text[:6000], height=260)
 
             with tab_links:
                 query = article_title
