@@ -77,41 +77,20 @@ def get_mock_news_results(query, num_results=5):
     Returns:
         list: List of mock news sources
     """
-    # Common reliable news sources
+    # Reliable news sources - Nepali and International
     news_sources = [
+        {
+            'title': f'Search on Online Khabar',
+            'url': f'https://www.onlinekhabar.com/?s={query.replace(" ", "+")}',
+            'snippet': 'Find related news on Online Khabar - Leading Nepali news portal with comprehensive coverage',
+            'source': 'Online Khabar',
+            'date': ''
+        },
         {
             'title': f'Search on BBC News',
             'url': f'https://www.bbc.com/search?q={query.replace(" ", "+")}',
-            'snippet': 'Find related news articles on BBC News - Trusted international news source',
+            'snippet': 'Find related news on BBC News - Trusted international news source with global coverage',
             'source': 'BBC News',
-            'date': ''
-        },
-        {
-            'title': f'Search on Reuters',
-            'url': f'https://www.reuters.com/search/news?blob={query.replace(" ", "+")}',
-            'snippet': 'Find related news on Reuters - Breaking international news and world coverage',
-            'source': 'Reuters',
-            'date': ''
-        },
-        {
-            'title': f'Search on Associated Press',
-            'url': f'https://apnews.com/search?q={query.replace(" ", "+")}',
-            'snippet': 'Find related news on AP News - Independent global news organization',
-            'source': 'AP News',
-            'date': ''
-        },
-        {
-            'title': f'Search on CNN',
-            'url': f'https://www.cnn.com/search?q={query.replace(" ", "+")}',
-            'snippet': 'Find related news on CNN - Breaking news and latest updates',
-            'source': 'CNN',
-            'date': ''
-        },
-        {
-            'title': f'Search on The Guardian',
-            'url': f'https://www.theguardian.com/search?q={query.replace(" ", "+")}',
-            'snippet': 'Find related news on The Guardian - Latest news and analysis',
-            'source': 'The Guardian',
             'date': ''
         }
     ]
