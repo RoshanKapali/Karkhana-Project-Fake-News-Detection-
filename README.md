@@ -62,19 +62,29 @@ Fake News/
    pip install -r requirements.txt
    ```
 
-4. **Train the model**
+4. **Download the dataset** (Required for training)
+   
+   The model requires both Fake.csv and True.csv to train:
+   
+   - Download from [Kaggle Fake and Real News Dataset](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset)
+   - Extract `Fake.csv` and `True.csv`
+   - Place both files in `data/raw/` folder
+   
+   **Note:** Pre-trained model files (`model.pkl` and `tfidf.pkl`) are already included in the repository. You only need to download the dataset if you want to retrain the model.
+
+5. **Train the model** (Optional - skip if using pre-trained model)
    ```bash
    python model/train_model.py
    ```
    
-   This creates `model.pkl` and `tfidf.pkl` files needed for predictions.
+   This creates new `model.pkl` and `tfidf.pkl` files with ~72% accuracy.
 
-5. **Run the Streamlit app**
+6. **Run the Streamlit app**
    ```bash
    streamlit run app.py
    ```
 
-6. **Open your browser** and go to `http://localhost:8501`
+7. **Open your browser** and go to `http://localhost:8501`
 
 ## 📊 Using the Application
 
@@ -88,45 +98,34 @@ Fake News/
 
 ## 🔧 Model Training
 
-### Default Training
+### Using Pre-trained Model (Recommended)
 
-The system includes sample data for quick setup. Run:
+The repository includes pre-trained model files (`model.pkl` and `tfidf.pkl`) with ~72% accuracy. You can use these directly without training.
 
-```bash
-python model/train_model.py
-```
+### Retraining the Model
 
-### Training with Real Dataset
+If you want to retrain or update the model:
 
-For better accuracy, download the Kaggle Fake and Real News Dataset:
+1. **Download the dataset** (Required):
+   - Go to [Kaggle Fake and Real News Dataset](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset)
+   - Download and extract `Fake.csv` and `True.csv`
+   - Place both files in `data/raw/` folder
 
-1. Download from [Kaggle](https://www.kaggle.com/datasets/clmentbisaillon/fake-and-real-news-dataset)
-2. Extract `Fake.csv` and `True.csv` to `data/raw/` folder
-3. Run training script again:
+2. **Run training script**:
    ```bash
    python model/train_model.py
    ```
 
-The model will automatically detect and use the Kaggle dataset.
-
-## 🔑 Optional: Bing Search API
-
-For enhanced fact-checking and news search:
-
-1. Get a free Bing Search API key from [Microsoft Azure](https://azure.microsoft.com/en-us/services/cognitive-services/bing-web-search-api/)
-2. Set environment variable:
-   
-   **Windows:**
+3. **Commit new model files** (if deploying):
    ```bash
-   set BING_API_KEY=your_api_key_here
-   ```
-   
-   **Linux/Mac:**
-   ```bash
-   export BING_API_KEY=your_api_key_here
+   git add model/*.pkl
+   git commit -m "Update trained model"
+   git push origin main
    ```
 
-Without the API key, the app uses fallback links to popular fact-checking websites.
+**Note:** The CSV files are ~100MB total and are not included in the repository to keep it lightweight.
+
+
 
 ## 🌐 Deployment on Streamlit Cloud
 
